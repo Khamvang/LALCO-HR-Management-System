@@ -2,6 +2,6 @@
 Code LALCO HR Management System
 
 
-Folder: https://drive.google.com/drive/folders/1bRGHT6Sv9cHSHBoEhZpYTbctoWG-F5JU
+Folder: https://drive.google.com/drive/folders/1DExwj0IS8k4gAxUBUhTFvNDK4RfgOjiH
 
-Google sheet: https://docs.google.com/spreadsheets/d/1vas8bUGd6DsE-NZ3MBtXGknHpka_3vxG4Y2N7RgRCvk/edit?gid=897123392#gid=897123392
+Google sheet: https://docs.google.com/spreadsheets/d/1gcXnMSG7xdUB4j6evJRK0BhgTgpplpyxRONt3iJoHtM/edit?gid=2015864326#gid=2015864326
