@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+
+  <style>
+    /* ໃຊ້ Phetsarath OT ສະເພາະໂຕອັກສອນລາວ, ແລະ MS PGothic ສະເພາະໂຕພາສາອັງກິດ/ຕົວເລກ - ຜ່ານ font-face + unicode-range */
+    @font-face {
+      font-family: 'FormFont';
+      src: local('Phetsarath OT'), local('PhetsarathOT');
+      unicode-range: U+0E80-0EFF, U+0300-036F, U+200B-200D, U+25CC;
+    }
+    @font-face {
+      font-family: 'FormFont';
+      src: local('MS PGothic'), local('MS UI Gothic');
+      unicode-range: U+0000-024F, U+2000-206F;
+    }
+
+    body { background-color: #f4f7f6; padding: 20px; font-family: 'FormFont', 'Phetsarath OT', 'MS PGothic', sans-serif; }
+    input, select, textarea, button, .form-control, .form-select, label, .btn, h1, h2, h3, h4, h5, h6, a {
+      font-family: 'FormFont', 'Phetsarath OT', 'MS PGothic', sans-serif;
+    }
+    .container { max-width: 1200px; width: 95%; background: white; padding: 30px 40px; border-radius: 15px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+    @media (max-width: 768px) {
+      .container { width: 100%; padding: 20px; }
+    }
+    .header { text-align: center; margin-bottom: 20px; color: #2c3e50; }
+    .section-title { background: #e9ecef; padding: 10px; border-left: 5px solid #0d6efd; margin-top: 20px; margin-bottom: 15px; font-weight: bold; }
+    .section-title-danger { background: #fff0f0; padding: 10px; border-left: 5px solid #dc3545; margin-top: 20px; margin-bottom: 15px; font-weight: bold; color: #dc3545; }
+    
+    label { font-weight: normal; color: #495057; font-size: 14.5px; margin-bottom: 5px; }
+    .sub-label { font-size: 14.5px; font-weight: normal; color: #6c757d; margin-bottom: 5px; }
+    .upload-label { font-size: 14.5px; font-weight: normal; color: #212529; margin-bottom: 5px; }
+    .hint-text { font-size: 13px; font-weight: 600; color: #0d6efd; }
+    .field-error { font-size: 12px; font-weight: normal; min-height: 16px; }
+    .form-control, .form-select { color: #004085 !important; font-weight: bold; background-color: #f4f9ff; border: 1px solid #b8daff; }
+    .form-control:focus, .form-select:focus { color: #004085 !important; background-color: #ffffff; border-color: #80bdff; box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25); }
+    
+    #dropZone { display: inline-block; position: relative; cursor: pointer; border-radius: 50%; padding: 5px; border: 3px dashed transparent; transition: 0.3s; }
+    #dropZone.highlight { border-color: #0d6efd; transform: scale(1.05); background-color: #e9ecef; }
+    .profile-pic { width: 150px; height: 150px; object-fit: cover; border-radius: 50%; border: 4px solid #0d6efd; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+    #dropZone:hover .profile-pic { opacity: 0.8; }
+    .file-link-btn { display: none; margin-top: 5px; }
+    
+    .select2-container--bootstrap-5 .select2-selection { font-weight: bold; color: #004085; background-color: #f4f9ff; border: 1px solid #b8daff; font-family: 'FormFont', 'Phetsarath OT', 'MS PGothic', sans-serif; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h2>🛠️ ລະບົບຄຸ້ມຄອງພະນັກງານ LALCO</h2>
+  </div>
+
+  <form id="hrForm" onsubmit="event.preventDefault(); handleFormSubmit(this)">
+    
+    <div class="text-center mb-4">
+      <div id="dropZone" title="ກົດເພື່ອເລືອກຮູບ, ລາກມາປ່ອຍ ຫຼື Ctrl+V">
+        <img id="imgPreview" src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png" class="profile-pic" alt="Profile Picture">
+      </div>
+      <div class="mt-2 hint-text">
+        📁 ກົດທີ່ຮູບ, ລາກຮູບມາປ່ອຍ ຫຼື ກ໋ອບປີ້ມາວາງ (Ctrl+V)
+      </div>
+      <input type="file" id="fileInput" accept="image/*" style="display: none;">
+      <input type="hidden" name="photoBase64" id="photoBase64">
+      <input type="hidden" name="oldPhotoUrl" id="oldPhotoUrl">
+    </div>
+
+    <div class="row bg-light p-3 rounded border mb-3">
+      <div class="col-md-12">
+        <label class="text-primary fw-bold" style="font-size: 16px;">Staff ID (ລະຫັດພະນັກງານ)</label>
+        <div class="input-group">
+          <input type="text" name="staffId" id="staffId" class="form-control" required>
+          <button type="button" class="btn btn-primary" onclick="searchStaff()">🔍 Search / Update (ຄົ້ນຫາ / ອັບເດດ)</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title-danger">🚦 Employment Status (ສະຖານະພະນັກງານ)</div>
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label>Status (ສະຖານະປັດຈຸບັນ)</label>
+        <select name="statusSelect" id="statusSelect" class="form-select bg-white">
+          <option value="Active">🟢 ເຮັດວຽກປົກກະຕິ (Active)</option>
+          <option value="Resigned">🔴 ລາອອກ (Resigned)</option>
+        </select>
+      </div>
+    </div>
+    
+    <div id="resignSection" class="row bg-light p-3 rounded border mb-3" style="display: none;">
+      <div class="col-md-4 mb-3">
+        <label class="text-danger fw-bold">Resigned Date (ວັນທີລາອອກ)</label>
+        <input type="date" name="resignDate" id="resignDate" class="form-control">
+      </div>
+      <div class="col-md-8 mb-3">
+        <label class="text-danger fw-bold">Reason of Resigned (ເຫດຜົນການລາອອກ)</label>
+        <input type="text" name="resignReason" id="resignReason" class="form-control" placeholder="ປ້ອນເຫດຜົນການລາອອກ...">
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="text-danger fw-bold">📁 Upload Resigned Letter (ອັບໂຫຼດເອກະສານລາອອກ PDF/Image/Word)</label>
+        <input type="file" id="resignLetterInput" class="form-control form-control-sm" onchange="readFileData(this, 'resignLetterBase64', 'resignLetterFileName')">
+        <input type="hidden" name="resignLetterBase64" id="resignLetterBase64">
+        <input type="hidden" name="resignLetterFileName" id="resignLetterFileName">
+        <input type="hidden" name="oldResignLetterUrl" id="oldResignLetterUrl">
+        <a id="resignLetterLink" href="#" target="_blank" class="btn btn-sm btn-outline-danger file-link-btn mt-2">📄 View Resigned Letter (ເບິ່ງເອກະສານລາອອກ)</a>
+      </div>
+    </div>
+
+    <div class="section-title">👤 Personal & Work Info (ຂໍ້ມູນສ່ວນຕົວ ແລະ ວຽກງານ)</div>
+    <div class="row">
+      <div class="col-md-4 mb-3"><label>Nickname (ຊື່ຫຼິ້ນ)</label><input type="text" name="nickname" id="nickname" class="form-control" placeholder="ປ້ອນຊື່ຫຼິ້ນ..."></div>
+      <div class="col-md-4 mb-3"><label>First Name Lao (ຊື່ ພາສາລາວ)</label><input type="text" name="firstNameLao" id="firstNameLao" class="form-control" placeholder="ປ້ອນຊື່ພາສາລາວ..." required></div>
+      <div class="col-md-4 mb-3"><label>Last Name Lao (ນາມສະກຸນ ພາສາລາວ)</label><input type="text" name="lastNameLao" id="lastNameLao" class="form-control" placeholder="ປ້ອນນາມສະກຸນພາສາລາວ..." required></div>
+      
+      <div class="col-md-4 mb-3">
+        <label>Phone Number (ເບີໂທລະສັບ)</label>
+        <div class="d-flex gap-2">
+          <select name="phoneCountryCode" id="phoneCountryCode" class="form-select phone-code-select">
+            <option value="">-- ລະຫັດ --</option>
+            <option value="+856">+856 (ລາວ)</option>
+            <option value="+66">+66 (ໄທ)</option>
+            <option value="+84">+84 (ຫວຽດນາມ)</option>
+            <option value="+855">+855 (ກຳປູເຈຍ)</option>
+            <option value="+95">+95 (ມຽນມາ)</option>
+            <option value="+86">+86 (ຈີນ)</option>
+            <option value="+82">+82 (ເກົາຫຼີ)</option>
+            <option value="+81">+81 (ຍີ່ປຸ່ນ)</option>
+            <option value="+65">+65 (ສິງກະໂປ)</option>
+            <option value="+60">+60 (ມາເລເຊຍ)</option>
+            <option value="+63">+63 (ຟີລິບປິນ)</option>
+            <option value="+91">+91 (ອິນເດຍ)</option>
+            <option value="+1">+1 (ອາເມລິກາ/ການາດາ)</option>
+            <option value="+44">+44 (ອັງກິດ)</option>
+            <option value="+61">+61 (ອົດສະຕຣາລີ)</option>
+            <option disabled>──────────</option>
+            <option value="+93">+93 (Afghanistan)</option>
+            <option value="+355">+355 (Albania)</option>
+            <option value="+213">+213 (Algeria)</option>
+            <option value="+376">+376 (Andorra)</option>
+            <option value="+244">+244 (Angola)</option>
+            <option value="+54">+54 (Argentina)</option>
+            <option value="+374">+374 (Armenia)</option>
+            <option value="+43">+43 (Austria)</option>
+            <option value="+994">+994 (Azerbaijan)</option>
+            <option value="+1">+1 (Bahamas)</option>
+            <option value="+973">+973 (Bahrain)</option>
+            <option value="+880">+880 (Bangladesh)</option>
+            <option value="+1">+1 (Barbados)</option>
+            <option value="+375">+375 (Belarus)</option>
+            <option value="+32">+32 (Belgium)</option>
+            <option value="+501">+501 (Belize)</option>
+            <option value="+229">+229 (Benin)</option>
+            <option value="+975">+975 (Bhutan)</option>
+            <option value="+591">+591 (Bolivia)</option>
+            <option value="+387">+387 (Bosnia and Herzegovina)</option>
+            <option value="+267">+267 (Botswana)</option>
+            <option value="+55">+55 (Brazil)</option>
+            <option value="+673">+673 (Brunei)</option>
+            <option value="+359">+359 (Bulgaria)</option>
+            <option value="+226">+226 (Burkina Faso)</option>
+            <option value="+257">+257 (Burundi)</option>
+            <option value="+238">+238 (Cabo Verde)</option>
+            <option value="+237">+237 (Cameroon)</option>
+            <option value="+236">+236 (Central African Republic)</option>
+            <option value="+235">+235 (Chad)</option>
+            <option value="+56">+56 (Chile)</option>
+            <option value="+57">+57 (Colombia)</option>
+            <option value="+269">+269 (Comoros)</option>
+            <option value="+242">+242 (Congo - Republic)</option>
+            <option value="+243">+243 (Congo - DRC)</option>
+            <option value="+506">+506 (Costa Rica)</option>
+            <option value="+225">+225 (Côte d'Ivoire)</option>
+            <option value="+385">+385 (Croatia)</option>
+            <option value="+53">+53 (Cuba)</option>
+            <option value="+357">+357 (Cyprus)</option>
+            <option value="+420">+420 (Czech Republic)</option>
+            <option value="+45">+45 (Denmark)</option>
+            <option value="+253">+253 (Djibouti)</option>
+            <option value="+1">+1 (Dominican Republic)</option>
+            <option value="+593">+593 (Ecuador)</option>
+            <option value="+20">+20 (Egypt)</option>
+            <option value="+503">+503 (El Salvador)</option>
+            <option value="+240">+240 (Equatorial Guinea)</option>
+            <option value="+291">+291 (Eritrea)</option>
+            <option value="+372">+372 (Estonia)</option>
+            <option value="+268">+268 (Eswatini)</option>
+            <option value="+251">+251 (Ethiopia)</option>
+            <option value="+679">+679 (Fiji)</option>
+            <option value="+358">+358 (Finland)</option>
+            <option value="+33">+33 (France)</option>
+            <option value="+241">+241 (Gabon)</option>
+            <option value="+220">+220 (Gambia)</option>
+            <option value="+995">+995 (Georgia)</option>
+            <option value="+49">+49 (Germany)</option>
+            <option value="+233">+233 (Ghana)</option>
+            <option value="+30">+30 (Greece)</option>
+            <option value="+502">+502 (Guatemala)</option>
+            <option value="+224">+224 (Guinea)</option>
+            <option value="+245">+245 (Guinea-Bissau)</option>
+            <option value="+592">+592 (Guyana)</option>
+            <option value="+509">+509 (Haiti)</option>
+            <option value="+504">+504 (Honduras)</option>
+            <option value="+36">+36 (Hungary)</option>
+            <option value="+354">+354 (Iceland)</option>
+            <option value="+62">+62 (Indonesia)</option>
+            <option value="+98">+98 (Iran)</option>
+            <option value="+964">+964 (Iraq)</option>
+            <option value="+353">+353 (Ireland)</option>
+            <option value="+972">+972 (Israel)</option>
+            <option value="+39">+39 (Italy)</option>
+            <option value="+1">+1 (Jamaica)</option>
+            <option value="+962">+962 (Jordan)</option>
+            <option value="+7">+7 (Kazakhstan)</option>
+            <option value="+254">+254 (Kenya)</option>
+            <option value="+686">+686 (Kiribati)</option>
+            <option value="+850">+850 (North Korea)</option>
+            <option value="+965">+965 (Kuwait)</option>
+            <option value="+996">+996 (Kyrgyzstan)</option>
+            <option value="+961">+961 (Lebanon)</option>
+            <option value="+266">+266 (Lesotho)</option>
+            <option value="+231">+231 (Liberia)</option>
+            <option value="+218">+218 (Libya)</option>
+            <option value="+423">+423 (Liechtenstein)</option>
+            <option value="+370">+370 (Lithuania)</option>
+            <option value="+352">+352 (Luxembourg)</option>
+            <option value="+261">+261 (Madagascar)</option>
+            <option value="+265">+265 (Malawi)</option>
+            <option value="+960">+960 (Maldives)</option>
+            <option value="+223">+223 (Mali)</option>
+            <option value="+356">+356 (Malta)</option>
+            <option value="+692">+692 (Marshall Islands)</option>
+            <option value="+222">+222 (Mauritania)</option>
+            <option value="+230">+230 (Mauritius)</option>
+            <option value="+52">+52 (Mexico)</option>
+            <option value="+691">+691 (Micronesia)</option>
+            <option value="+373">+373 (Moldova)</option>
+            <option value="+377">+377 (Monaco)</option>
+            <option value="+976">+976 (Mongolia)</option>
+            <option value="+382">+382 (Montenegro)</option>
+            <option value="+212">+212 (Morocco)</option>
+            <option value="+258">+258 (Mozambique)</option>
+            <option value="+264">+264 (Namibia)</option>
+            <option value="+674">+674 (Nauru)</option>
+            <option value="+977">+977 (Nepal)</option>
+            <option value="+31">+31 (Netherlands)</option>
+            <option value="+64">+64 (New Zealand)</option>
+            <option value="+505">+505 (Nicaragua)</option>
+            <option value="+227">+227 (Niger)</option>
+            <option value="+234">+234 (Nigeria)</option>
+            <option value="+389">+389 (North Macedonia)</option>
+            <option value="+47">+47 (Norway)</option>
+            <option value="+968">+968 (Oman)</option>
+            <option value="+92">+92 (Pakistan)</option>
+            <option value="+680">+680 (Palau)</option>
+            <option value="+970">+970 (Palestine)</option>
+            <option value="+507">+507 (Panama)</option>
+            <option value="+675">+675 (Papua New Guinea)</option>
+            <option value="+595">+595 (Paraguay)</option>
+            <option value="+51">+51 (Peru)</option>
+            <option value="+48">+48 (Poland)</option>
+            <option value="+351">+351 (Portugal)</option>
+            <option value="+974">+974 (Qatar)</option>
+            <option value="+40">+40 (Romania)</option>
+            <option value="+7">+7 (Russia)</option>
+            <option value="+250">+250 (Rwanda)</option>
+            <option value="+378">+378 (San Marino)</option>
+            <option value="+239">+239 (Sao Tome and Principe)</option>
+            <option value="+966">+966 (Saudi Arabia)</option>
+            <option value="+221">+221 (Senegal)</option>
+            <option value="+381">+381 (Serbia)</option>
+            <option value="+248">+248 (Seychelles)</option>
+            <option value="+232">+232 (Sierra Leone)</option>
+            <option value="+421">+421 (Slovakia)</option>
+            <option value="+386">+386 (Slovenia)</option>
+            <option value="+677">+677 (Solomon Islands)</option>
+            <option value="+252">+252 (Somalia)</option>
+            <option value="+27">+27 (South Africa)</option>
+            <option value="+211">+211 (South Sudan)</option>
+            <option value="+34">+34 (Spain)</option>
+            <option value="+94">+94 (Sri Lanka)</option>
+            <option value="+249">+249 (Sudan)</option>
+            <option value="+597">+597 (Suriname)</option>
+            <option value="+46">+46 (Sweden)</option>
+            <option value="+41">+41 (Switzerland)</option>
+            <option value="+963">+963 (Syria)</option>
+            <option value="+886">+886 (Taiwan)</option>
+            <option value="+992">+992 (Tajikistan)</option>
+            <option value="+255">+255 (Tanzania)</option>
+            <option value="+670">+670 (Timor-Leste)</option>
+            <option value="+228">+228 (Togo)</option>
+            <option value="+676">+676 (Tonga)</option>
+            <option value="+1">+1 (Trinidad and Tobago)</option>
+            <option value="+216">+216 (Tunisia)</option>
+            <option value="+90">+90 (Turkey)</option>
+            <option value="+993">+993 (Turkmenistan)</option>
+            <option value="+688">+688 (Tuvalu)</option>
+            <option value="+256">+256 (Uganda)</option>
+            <option value="+380">+380 (Ukraine)</option>
+            <option value="+971">+971 (United Arab Emirates)</option>
+            <option value="+598">+598 (Uruguay)</option>
+            <option value="+998">+998 (Uzbekistan)</option>
+            <option value="+678">+678 (Vanuatu)</option>
+            <option value="+379">+379 (Vatican City)</option>
+            <option value="+58">+58 (Venezuela)</option>
+            <option value="+967">+967 (Yemen)</option>
+            <option value="+260">+260 (Zambia)</option>
+            <option value="+263">+263 (Zimbabwe)</option>
+          </select>
+          <input type="text" id="phoneNumber" class="form-control" placeholder="ກະລຸນາເລືອກລະຫັດປະເທດກ່ອນ..." inputmode="numeric" disabled oninput="checkPhoneNumberLive()">
+        </div>
+        <div id="phoneError" class="text-danger field-error"></div>
+        <input type="hidden" name="phone" id="phone">
+      </div>
+      <div class="col-md-4 mb-3"><label>First Name En (ຊື່ ພາສາອັງກິດ)</label><input type="text" name="firstNameEn" id="firstNameEn" class="form-control" placeholder="ປ້ອນຊື່ພາສາອັງກິດ..."></div>
+      <div class="col-md-4 mb-3"><label>Last Name En (ນາມສະກຸນ ພາສາອັງກິດ)</label><input type="text" name="lastNameEn" id="lastNameEn" class="form-control" placeholder="ປ້ອນນາມສະກຸນພາສາອັງກິດ..."></div>
+      
+      <div class="col-md-3 mb-3">
+        <label>Branch (ສາຂາ)</label>
+        <input type="text" name="branch" id="branch" class="form-control" list="branchDatalist" placeholder="ປ້ອນສາຂາ...">
+        <datalist id="branchDatalist"></datalist>
+      </div>
+      <div class="col-md-3 mb-3">
+        <label>Department (ພະແນກ)</label>
+        <input type="text" name="department" id="department" class="form-control" list="deptDatalist" placeholder="ປ້ອນພະແນກ...">
+        <datalist id="deptDatalist"></datalist>
+      </div>
+      <div class="col-md-3 mb-3">
+        <label>Unit (ໜ່ວຍງານ)</label>
+        <select name="unit" id="unit" class="form-select search-select">
+          <option value="">-- ພິມຄົ້ນຫາ (ລະຫັດ ຫຼື ຊື່) --</option>
+        </select>
+      </div>
+      <div class="col-md-3 mb-3">
+        <label>Position (ຕຳແໜ່ງ)</label>
+        <input type="text" name="position" id="position" class="form-control" list="posDatalist" placeholder="ປ້ອນຕຳແໜ່ງ...">
+        <datalist id="posDatalist"></datalist>
+      </div>
+      
+      <div class="col-md-4 mb-3"><label>Hire Date (ວັນທີເຂົ້າວຽກ)</label><input type="date" name="hireDate" id="hireDate" class="form-control"></div>
+      <div class="col-md-4 mb-3"><label>Basic Salary (ເງິນເດືອນພື້ນຖານ)</label><input type="number" name="salary" id="salary" class="form-control" placeholder="ປ້ອນເງິນເດືອນພື້ນຖານ..."></div>
+      <div class="col-md-4 mb-3"><label>Date of Birth (ວັນເດືອນປີເກີດ)</label><input type="date" name="dob" id="dob" class="form-control"></div>
+
+      <div class="col-md-4 mb-3">
+        <label>Gender (ເພດ)</label>
+        <select name="gender" id="gender" class="form-select search-select">
+          <option value="">-- ເລືອກເພດ --</option>
+          <option value="F">ຍິງ (Female)</option>
+          <option value="M">ຊາຍ (Male)</option>
+        </select>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label>Nationality (ສັນຊາດ)</label>
+        <select name="nationality" id="nationality" class="form-select search-select">
+          <option value="Lao (ລາວ)">Lao (ລາວ)</option>
+          <option value="Thai (ໄທ)">Thai (ໄທ)</option>
+          <option value="Vietnamese (ຫວຽດນາມ)">Vietnamese (ຫວຽດນາມ)</option>
+          <option value="Chinese (ຈີນ)">Chinese (ຈີນ)</option>
+          <option value="Japanese (ຍີ່ປຸ່ນ)">Japanese (ຍີ່ປຸ່ນ)</option>
+          <option value="Korean (ເກົາຫຼີ)">Korean (ເກົາຫຼີ)</option>
+          <option value="American (ອາເມລິກາ)">American (ອາເມລິກາ)</option>
+          <option value="British (ອັງກິດ)">British (ອັງກິດ)</option>
+          <option value="French (ຝຣັ່ງ)">French (ຝຣັ່ງ)</option>
+          <option value="Australian (ອົດສະຕຣາລີ)">Australian (ອົດສະຕຣາລີ)</option>
+          <option value="Other (ອື່ນໆ)">Other (ອື່ນໆ)</option>
+          <option disabled>──────────</option>
+          <option value="Afghan">Afghan</option><option value="Albanian">Albanian</option><option value="Algerian">Algerian</option><option value="Argentine">Argentine</option><option value="Austrian">Austrian</option><option value="Bangladeshi">Bangladeshi</option><option value="Belgian">Belgian</option><option value="Brazilian">Brazilian</option><option value="Cambodian">Cambodian</option><option value="Canadian">Canadian</option><option value="Colombian">Colombian</option><option value="Croatian">Croatian</option><option value="Cuban">Cuban</option><option value="Czech">Czech</option><option value="Danish">Danish</option><option value="Dutch">Dutch</option><option value="Egyptian">Egyptian</option><option value="Filipino">Filipino</option><option value="Finnish">Finnish</option><option value="German">German</option><option value="Greek">Greek</option><option value="Indian">Indian</option><option value="Indonesian">Indonesian</option><option value="Iranian">Iranian</option><option value="Iraqi">Iraqi</option><option value="Irish">Irish</option><option value="Israeli">Israeli</option><option value="Italian">Italian</option><option value="Malaysian">Malaysian</option><option value="Mexican">Mexican</option><option value="Moroccan">Moroccan</option><option value="Myanmar (Burmese)">Myanmar (Burmese)</option><option value="Nepalese">Nepalese</option><option value="New Zealander">New Zealander</option><option value="Nigerian">Nigerian</option><option value="Norwegian">Norwegian</option><option value="Pakistani">Pakistani</option><option value="Peruvian">Peruvian</option><option value="Polish">Polish</option><option value="Portuguese">Portuguese</option><option value="Russian">Russian</option><option value="Saudi">Saudi</option><option value="Singaporean">Singaporean</option><option value="South African">South African</option><option value="Spanish">Spanish</option><option value="Sri Lankan">Sri Lankan</option><option value="Swedish">Swedish</option><option value="Swiss">Swiss</option><option value="Taiwanese">Taiwanese</option><option value="Turkish">Turkish</option><option value="Ukrainian">Ukrainian</option>
+        </select>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label>Marital Status (ສະຖານະພາບ)</label>
+        <select name="maritalStatus" id="maritalStatus" class="form-select search-select">
+          <option value="">-- ເລືອກສະຖານະພາບ --</option>
+          <option value="1 = ໂສດ">1 = ໂສດ</option>
+          <option value="2 = ແຕ່ງງານ">2 = ແຕ່ງງານ</option>
+          <option value="3 = ແຍກກັນຢູ່">3 = ແຍກກັນຢູ່</option>
+          <option value="4 = ຢ່າຮ້າງ">4 = ຢ່າຮ້າງ</option>
+          <option value="5 = ກິນຢູ່ນຳກັນໂດຍບໍ່ແຕ່ງງານ">5 = ກິນຢູ່ນຳກັນໂດຍບໍ່ແຕ່ງງານ</option>
+          <option value="6 = ເປັນໝ້າຍ">6 = ເປັນໝ້າຍ</option>
+          <option value="7 = ອື່ນໆ">7 = ອື່ນໆ</option>
+        </select>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label>Application Source (ສະໝັກ ຫຼື ແນະນຳຈາກພາກສ່ວນໃດ)</label>
+        <select name="source" id="source" class="form-select search-select">
+          <option value="">-- ເລືອກຊ່ອງທາງ --</option>
+          <option value="ພະນັກງານພາຍໃນແນະນຳ">ພະນັກງານພາຍໃນແນະນຳ</option>
+          <option value="ພະນັກງານການຕະຫຼາດແນະນຳ">ພະນັກງານການຕະຫຼາດແນະນຳ</option>
+          <option value="108 Job">108 Job</option>
+          <option value="Facebook LALCO">Facebook LALCO</option>
+          <option value="Facebook ສ່ວນໂຕ">Facebook ສ່ວນໂຕ</option>
+          <option value="ນັກສຶກສາທຶນ">ນັກສຶກສາທຶນ</option>
+          <option value="5WAY">5WAY</option>
+        </select>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label>Referrer Name (ຜູ້ແນະນຳແມ່ນໃຜ)</label>
+        <select name="referrer" id="referrer" class="form-select search-select">
+          <option value="">-- ພິມຄົ້ນຫາຜູ້ແນະນຳ (ລະຫັດ ຫຼື ຊື່) --</option>
+        </select>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label class="upload-label">📁 Upload Contract (ອັບໂຫຼດສັນຍາພະນັກງານ):</label>
+        <input type="file" id="contractInput" class="form-control form-control-sm" onchange="readFileData(this, 'contractBase64', 'contractFileName')">
+        <input type="hidden" name="contractBase64" id="contractBase64">
+        <input type="hidden" name="contractFileName" id="contractFileName">
+        <input type="hidden" name="oldContractUrl" id="oldContractUrl">
+        <a id="contractLink" href="#" target="_blank" class="btn btn-sm btn-outline-info file-link-btn">View Contract (ເປີດເບິ່ງໄຟລ໌ສັນຍາປັດຈຸບັນ)</a>
+      </div>
+    </div>
+
+    <div class="section-title">📍 Address Info (ຂໍ້ມູນທີ່ຢູ່)</div>
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label>Province of Birth (ແຂວງເກີດ)</label>
+        <select name="pBirth" id="pBirth" class="form-select search-select address-province" data-prefix="Birth">
+          <option value="">-- ເລືອກແຂວງ --</option>
+        </select>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label>District of Birth (ເມືອງເກີດ)</label>
+        <select name="dBirth" id="dBirth" class="form-select search-select address-district" data-prefix="Birth" disabled>
+          <option value="">-- ເລືອກເມືອງ --</option>
+        </select>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label>Village of Birth (ບ້ານເກີດ)</label>
+        <select name="vBirth" id="vBirth" class="form-select search-select" disabled>
+          <option value="">-- ເລືອກບ້ານ --</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label>Province of Live (ແຂວງຢູ່ປັດຈຸບັນ)</label>
+        <select name="pCurr" id="pCurr" class="form-select search-select address-province" data-prefix="Curr">
+          <option value="">-- ເລືອກແຂວງ --</option>
+        </select>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label>District of Live (ເມືອງຢູ່ປັດຈຸບັນ)</label>
+        <select name="dCurr" id="dCurr" class="form-select search-select address-district" data-prefix="Curr" disabled>
+          <option value="">-- ເລືອກເມືອງ --</option>
+        </select>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label>Village of Live (ບ້ານຢູ່ປັດຈຸບັນ)</label>
+        <select name="vCurr" id="vCurr" class="form-select search-select" disabled>
+          <option value="">-- ເລືອກບ້ານ --</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-title">🎓 Education Info (ການສຶກສາ)</div>
+    <div class="row">
+      <div class="col-md-3 mb-3">
+        <label>Education Level (ລະດັບການສຶກສາ)</label>
+        <select name="eduLevel" id="eduLevel" class="form-select search-select">
+          <option value="">-- ເລືອກລະດັບການສຶກສາ --</option>
+          <option value="1 = ປະລິນຍາເອກ">1 = ປະລິນຍາເອກ</option>
+          <option value="2 = ປະລິນຍາໂທ">2 = ປະລິນຍາໂທ</option>
+          <option value="3 = ປະລິນຍາຕີ">3 = ປະລິນຍາຕີ</option>
+          <option value="4 = ອະນຸປະລິນຍາ">4 = ອະນຸປະລິນຍາ</option>
+          <option value="5 = ອາຊີວະສຶກສາ (ຊັ້ນຕົ້ນ, ຊັ້ນກາງ ແລະ ຊັ້ນສູງ)">5 = ອາຊີວະສຶກສາ (ຊັ້ນຕົ້ນ, ຊັ້ນກາງ ແລະ ຊັ້ນສູງ)</option>
+          <option value="6 = ສາມັນສຶກສາ (ປະຖົມສຶກສາ ແລະ ມັດທະຍົມສຶກສາ)">6 = ສາມັນສຶກສາ (ປະຖົມສຶກສາ ແລະ ມັດທະຍົມສຶກສາ)</option>
+          <option value="7 = ອື່ນໆ">7 = ອື່ນໆ</option>
+        </select>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label>Graduate From (ໂຮງຮຽນທີ່ຮຽນຈົບ)</label>
+        <input type="text" name="school" id="school" class="form-control" list="schoolDatalist" placeholder="ປ້ອນສະຖາບັນການສຶກສາ...">
+        <datalist id="schoolDatalist"></datalist>
+      </div>
+      <div class="col-md-3 mb-3">
+        <label>Major (ສາຂາທີ່ຮຽນຈົບ)</label>
+        <input type="text" name="major" id="major" class="form-control" list="majorDatalist" placeholder="ປ້ອນສາຂາທີ່ຮຽນຈົບ...">
+        <datalist id="majorDatalist"></datalist>
+      </div>
+      <div class="col-md-2 mb-3"><label>GPA (ຄະແນນສະເລ່ຍ)</label><input type="text" name="gpa" id="gpa" class="form-control" placeholder="GPA..."></div>
+    </div>
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="upload-label">📁 Upload CV (ອັບໂຫຼດ CV):</label>
+        <input type="file" id="cvInput" class="form-control form-control-sm" onchange="readFileData(this, 'cvBase64', 'cvFileName')">
+        <input type="hidden" name="cvBase64" id="cvBase64">
+        <input type="hidden" name="cvFileName" id="cvFileName">
+        <input type="hidden" name="oldCvUrl" id="oldCvUrl">
+        <a id="cvLink" href="#" target="_blank" class="btn btn-sm btn-outline-info file-link-btn">View CV (ເປີດເບິ່ງໄຟລ໌ CV ປັດຈຸບັນ)</a>
+      </div>
+    </div>
+
+    <div class="section-title">📄 References & Documents (ຂໍ້ມູນເອກະສານອ້າງອີງ)</div>
+    <div class="row"><div class="col-md-12"><label class="text-danger fw-bold">Driver License (ໃບຂັບຂີ່):</label></div></div>
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label class="sub-label">Driver License ID (ລະຫັດໃບຂັບຂີ່):</label>
+        <input type="text" name="driverId" id="driverId" class="form-control" placeholder="ປ້ອນລະຫັດໃບຂັບຂີ່...">
+      </div>
+    </div>
+
+    <div class="row"><div class="col-md-12"><label class="text-danger fw-bold">ID Card (ບັດປະຈຳຕົວ):</label></div></div>
+    <div class="row mb-3">
+      <div class="col-md-3"><label class="sub-label">ID Card Number (ເລກບັດປະຈຳຕົວ):</label><input type="text" name="idCard" id="idCard" class="form-control" placeholder="ປ້ອນເລກບັດ..."></div>
+      <div class="col-md-3"><label class="sub-label">Name on ID Card (ຊື່ໃນບັດ):</label><input type="text" name="idName" id="idName" class="form-control" placeholder="ຊື່ ແລະ ນາມສະກຸນ..."></div>
+      <div class="col-md-3"><label class="sub-label">ID Issue Date (ວັນອອກບັດ):</label><input type="date" name="idIssue" id="idIssue" class="form-control"></div>
+      <div class="col-md-3"><label class="sub-label">ID Expiration Date (ວັນໝົດອາຍຸບັດ):</label><input type="date" name="idExp" id="idExp" class="form-control"></div>
+    </div>
+
+    <div class="row"><div class="col-md-12"><label class="text-danger fw-bold">Family Book (ສຳມະໂນຄົວ):</label></div></div>
+    <div class="row mb-3">
+      <div class="col-md-4"><label class="sub-label">Family Book ID (ເລກສຳມະໂນຄົວ):</label><input type="text" name="famBook" id="famBook" class="form-control" placeholder="ປ້ອນເລກສຳມະໂນຄົວ..."></div>
+      <div class="col-md-4"><label class="sub-label">Family Book Issue Date (ວັນອອກສຳມະໂນຄົວ):</label><input type="date" name="famIssue" id="famIssue" class="form-control"></div>
+    </div>
+
+    <div class="row"><div class="col-md-12"><label class="text-danger fw-bold">Passport (ໜັງສືຜ່ານແດນ):</label></div></div>
+    <div class="row mb-4">
+      <div class="col-md-3"><label class="sub-label">Passport Number (ເລກພາດສະປອດ):</label><input type="text" name="passport" id="passport" class="form-control" placeholder="ປ້ອນເລກພາດສະປອດ..."></div>
+      <div class="col-md-3"><label class="sub-label">Name on Passport (ຊື່ໃນພາດສະປອດ):</label><input type="text" name="passName" id="passName" class="form-control" placeholder="ຊື່ພາສາອັງກິດ..."></div>
+      <div class="col-md-3"><label class="sub-label">Passport Issue Date (ວັນທີ່ອອກພາດສະປອດ):</label><input type="date" name="passIssue" id="passIssue" class="form-control"></div>
+      <div class="col-md-3"><label class="sub-label">Passport Expiration Date (ວັນໝົດອາຍຸພາດສະປອດ):</label><input type="date" name="passExp" id="passExp" class="form-control"></div>
+    </div>
+
+    <div class="row"><div class="col-md-12"><label class="text-danger fw-bold">Bank Account (ບັນຊີທະນາຄານ):</label></div></div>
+    <div class="row mb-4">
+      <div class="col-md-3"><label class="sub-label">Account Name (ຊື່ບັນຊີ):</label><input type="text" name="bankAccountName" id="bankAccountName" class="form-control" placeholder="ຊື່ບັນຊີ..."></div>
+      <div class="col-md-3"><label class="sub-label">Account Number (ເລກບັນຊີ):</label><input type="text" name="bankAccountNumber" id="bankAccountNumber" class="form-control" placeholder="ເລກບັນຊີ..."></div>
+      <div class="col-md-3">
+        <label class="sub-label">Currency (ສະກຸນເງິນ):</label>
+        <input type="text" name="currency" id="currency" class="form-control" list="currencyDatalist" placeholder="ເລືອກ ຫຼື ພິມສະກຸນເງິນ...">
+        <datalist id="currencyDatalist">
+          <option value="LAK">
+          <option value="THB">
+          <option value="USD">
+          <option value="CNY">
+        </datalist>
+      </div>
+      <div class="col-md-3">
+        <label class="upload-label">📁 Upload Bank Book Photo (ອັບໂຫຼດຮູບປຶ້ມບັນຊີ):</label>
+        <input type="file" id="bankBookInput" accept="image/*" class="form-control form-control-sm" onchange="readFileData(this, 'bankBookBase64', 'bankBookFileName')">
+        <input type="hidden" name="bankBookBase64" id="bankBookBase64">
+        <input type="hidden" name="bankBookFileName" id="bankBookFileName">
+        <input type="hidden" name="oldBankBookUrl" id="oldBankBookUrl">
+        <a id="bankBookLink" href="#" target="_blank" class="btn btn-sm btn-outline-info file-link-btn">View Bank Book (ເບິ່ງຮູບປຶ້ມບັນຊີ)</a>
+      </div>
+    </div>
+
+    <div class="d-grid gap-2 mt-4">
+      <button type="submit" id="saveBtn" class="btn btn-success btn-lg">💾 Save All Data (ບັນທຶກຂໍ້ມູນທັງໝົດ)</button>
+      <button type="button" class="btn btn-outline-danger" onclick="resetForm()">🔄 Clear Form (ລ້າງຟອມ)</button>
+    </div>
+  </form>
+
+  <div id="status" class="mt-3 text-center fw-bold fs-5"></div>
+  <hr>
+  <button class="btn btn-secondary w-100" onclick="loadAllStaff()">📊 Show All Staff (ສະແດງລາຍຊື່ທັງໝົດ)</button>
+  <div id="tableOutput" class="mt-4" style="overflow-x: auto;"></div>
+</div>
+
+<script>
+  window.isSearchingAddress = false;
+
+  $(document).ready(function() {
+    var todayStr = new Date().toISOString().split('T')[0];
+    ['idIssue', 'famIssue', 'passIssue'].forEach(function(fieldId) {
+      document.getElementById(fieldId).setAttribute('max', todayStr);
+    });
+
+    // ລຶບໝາຍແດງອອກທັນທີເມື່ອ user ແກ້ໄຂຊ່ອງເອກະສານຢັ້ງຢືນຕົວຕົນ
+    ['idCard', 'idName', 'idIssue', 'idExp', 'famBook', 'famIssue', 'passport', 'passName', 'passIssue', 'passExp'].forEach(function(fieldId) {
+      document.getElementById(fieldId).addEventListener('input', function() {
+        this.classList.remove('is-invalid');
+      });
+    });
+
+    $('.search-select').select2({
+      theme: 'bootstrap-5',
+      width: '100%',
+      allowClear: true
+    });
+    
+    $('#unit').select2({
+      theme: 'bootstrap-5',
+      width: '100%',
+      placeholder: "-- ພິມຄົ້ນຫາ (ລະຫັດ ຫຼື ຊື່) --",
+      allowClear: true,
+      tags: true 
+    });
+
+    $('#phoneCountryCode').select2({
+      theme: 'bootstrap-5',
+      width: '200px',
+      placeholder: "-- ຄົ້ນຫາລະຫັດປະເທດ --",
+      allowClear: true
+    });
+    $('#phoneCountryCode').on('change', onPhoneCountryCodeChange);
+
+    $('#statusSelect').on('change', function() {
+      if ($(this).val() === 'Resigned') {
+        $('#resignSection').slideDown();
+      } else {
+        $('#resignSection').slideUp();
+      }
+    });
+    
+    $('.address-province').on('change', function() {
+      if(window.isSearchingAddress) return;
+      var prefix = $(this).data('prefix');
+      var prov = $(this).val();
+      var distSelect = $('#d' + prefix);
+      var villSelect = $('#v' + prefix);
+      
+      distSelect.empty().append('<option value="">-- ເລືອກເມືອງ --</option>').val('').trigger('change').prop('disabled', true);
+      villSelect.empty().append('<option value="">-- ເລືອກບ້ານ --</option>').val('').trigger('change').prop('disabled', true);
+      
+      if(prov) {
+        google.script.run.withSuccessHandler(function(districts) {
+          districts.forEach(function(d) { distSelect.append(new Option(d, d)); });
+          distSelect.prop('disabled', false).trigger('change');
+        }).getDistricts(prov);
+      }
+    });
+
+    $('.address-district').on('change', function() {
+      if(window.isSearchingAddress) return;
+      var prefix = $(this).data('prefix');
+      var prov = $('#p' + prefix).val();
+      var dist = $(this).val();
+      var villSelect = $('#v' + prefix);
+      
+      villSelect.empty().append('<option value="">-- ເລືອກບ້ານ --</option>').val('').trigger('change').prop('disabled', true);
+      
+      if(prov && dist) {
+        google.script.run.withSuccessHandler(function(villages) {
+          villages.forEach(function(v) { villSelect.append(new Option(v, v)); });
+          villSelect.prop('disabled', false).trigger('change');
+        }).getVillages(prov, dist);
+      }
+    });
+  });
+
+  document.addEventListener("DOMContentLoaded", function() {
+    google.script.run.withSuccessHandler(function(staffList) {
+      var referrerSelect = $('#referrer');
+      var unitSelect = $('#unit'); 
+      
+      referrerSelect.empty().append('<option value="">-- ພິມຄົ້ນຫາຜູ້ແນະນຳ (ລະຫັດ ຫຼື ຊື່) --</option>');
+      unitSelect.empty().append('<option value="">-- ພິມຄົ້ນຫາ (ລະຫັດ ຫຼື ຊື່) --</option>');
+      
+      for(var i = 0; i < staffList.length; i++) {
+        referrerSelect.append(new Option(staffList[i], staffList[i], false, false));
+        unitSelect.append(new Option(staffList[i], staffList[i], false, false)); 
+      }
+      referrerSelect.trigger('change');
+      unitSelect.trigger('change');
+    }).getStaffListForDropdown();
+
+    // 📌 ໂຫຼດລາຍຊື່ Branch, Dept, Position ລົງ Datalist
+    google.script.run.withSuccessHandler(function(workData) {
+      var bHtml = '', dHtml = '', pHtml = '';
+      for(var i = 0; i < workData.branches.length; i++) bHtml += '<option value="' + workData.branches[i] + '">';
+      for(var j = 0; j < workData.departments.length; j++) dHtml += '<option value="' + workData.departments[j] + '">';
+      for(var k = 0; k < workData.positions.length; k++) pHtml += '<option value="' + workData.positions[k] + '">';
+      
+      document.getElementById('branchDatalist').innerHTML = bHtml;
+      document.getElementById('deptDatalist').innerHTML = dHtml;
+      document.getElementById('posDatalist').innerHTML = pHtml;
+    }).getWorkDataForDatalist();
+
+    google.script.run.withSuccessHandler(function(eduData) {
+      var schoolList = document.getElementById('schoolDatalist');
+      var majorList = document.getElementById('majorDatalist');
+      var sHtml = '', mHtml = '';
+      for(var i = 0; i < eduData.schools.length; i++) sHtml += '<option value="' + eduData.schools[i] + '">';
+      for(var j = 0; j < eduData.majors.length; j++) mHtml += '<option value="' + eduData.majors[j] + '">';
+      schoolList.innerHTML = sHtml;
+      majorList.innerHTML = mHtml;
+    }).getEducationDataForDatalist();
+
+    google.script.run.withSuccessHandler(function(provinces) {
+      var pBirth = $('#pBirth');
+      var pCurr = $('#pCurr');
+      provinces.forEach(function(p) {
+        pBirth.append(new Option(p, p));
+        pCurr.append(new Option(p, p));
+      });
+      pBirth.trigger('change.select2');
+      pCurr.trigger('change.select2');
+    }).getProvinces();
+  });
+
+  function populateAddressSequence(prefix, provVal, distVal, villVal) {
+    var pSel = $('#p' + prefix);
+    var dSel = $('#d' + prefix);
+    var vSel = $('#v' + prefix);
+
+    pSel.val(provVal).trigger('change.select2');
+
+    if(provVal) {
+      google.script.run.withSuccessHandler(function(districts) {
+        dSel.empty().append('<option value="">-- ເລືອກເມືອງ --</option>');
+        districts.forEach(function(d) { dSel.append(new Option(d, d)); });
+        dSel.prop('disabled', false).val(distVal).trigger('change.select2');
+        
+        if(distVal) {
+          google.script.run.withSuccessHandler(function(villages) {
+            vSel.empty().append('<option value="">-- ເລືອກບ້ານ --</option>');
+            villages.forEach(function(v) { vSel.append(new Option(v, v)); });
+            vSel.prop('disabled', false).val(villVal).trigger('change.select2');
+          }).getVillages(provVal, distVal);
+        }
+      }).getDistricts(provVal);
+    }
+  }
+
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+  const imgPreview = document.getElementById('imgPreview');
+  const photoBase64 = document.getElementById('photoBase64');
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => processImageFile(e.target.files[0]));
+
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+    dropZone.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
+  });
+  ['dragenter', 'dragover'].forEach(evt => dropZone.addEventListener(evt, () => dropZone.classList.add('highlight'), false));
+  ['dragleave', 'drop'].forEach(evt => dropZone.addEventListener(evt, () => dropZone.classList.remove('highlight'), false));
+  dropZone.addEventListener('drop', (e) => processImageFile(e.dataTransfer.files[0]), false);
+
+  window.addEventListener('paste', (e) => {
+    let items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        processImageFile(items[i].getAsFile());
+        break;
+      }
+    }
+  });
+
+  function processImageFile(file) {
+    if (!file || !file.type.match('image.*')) return;
+    let reader = new FileReader();
+    reader.onload = function(event) {
+      let img = new Image();
+      img.onload = function() {
+        let canvas = document.createElement('canvas');
+        let ctx = canvas.getContext('2d');
+        let maxW = 600, maxH = 600;
+        let w = img.width, h = img.height;
+        if (w > maxW || h > maxH) {
+          let ratio = Math.min(maxW / w, maxH / h);
+          w *= ratio; h *= ratio;
+        }
+        canvas.width = w; canvas.height = h;
+        ctx.drawImage(img, 0, 0, w, h);
+        let base64String = canvas.toDataURL('image/jpeg', 0.8);
+        imgPreview.src = base64String;
+        photoBase64.value = base64String;
+      }
+      img.src = event.target.result;
+    }
+    reader.readAsDataURL(file);
+  }
+
+  function readFileData(input, base64Id, nameId) {
+    let file = input.files[0];
+    if (!file) return;
+    let reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById(base64Id).value = e.target.result;
+      document.getElementById(nameId).value = file.name;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function validateIssueDates() {
+    var todayStr = new Date().toISOString().split('T')[0];
+    var issueFields = [
+      { id: 'idIssue', label: 'ວັນອອກບັດ (ID Issue Date)' },
+      { id: 'famIssue', label: 'ວັນອອກສຳມະໂນຄົວ (Family Book Issue Date)' },
+      { id: 'passIssue', label: 'ວັນທີ່ອອກພາດສະປອດ (Passport Issue Date)' }
+    ];
+    for (var i = 0; i < issueFields.length; i++) {
+      var val = document.getElementById(issueFields[i].id).value;
+      if (val && val > todayStr) {
+        alert("⚠️ " + issueFields[i].label + " ຕ້ອງນ້ອຍກວ່າ ຫຼື ເທົ່າກັບມື້ນີ້!\n(Issue date cannot be later than today.)");
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // ກຸ່ມເອກະສານຢັ້ງຢືນຕົວຕົນ 3 ຢ່າງ — ຖ້າໃສ່ຫົວຂໍ້ໃດໜຶ່ງໃນກຸ່ມ ຕ້ອງໃສ່ໃຫ້ຄົບທຸກຫົວຂໍ້ໃນກຸ່ມນັ້ນ
+  // ຢ່າງໜ້ອຍຕ້ອງມີ 1 ກຸ່ມທີ່ຄົບຖ້ວນ ຈຶ່ງບັນທຶກໄດ້
+  var IDENTITY_DOC_GROUPS = [
+    {
+      sectionText: 'ID Card',
+      name: 'ID Card (ບັດປະຈຳຕົວ)',
+      fields: [
+        { id: 'idCard', label: 'ID Card Number (ເລກບັດປະຈຳຕົວ)' },
+        { id: 'idName', label: 'Name on ID Card (ຊື່ໃນບັດ)' },
+        { id: 'idIssue', label: 'ID Issue Date (ວັນອອກບັດ)' },
+        { id: 'idExp', label: 'ID Expiration Date (ວັນໝົດອາຍຸບັດ)' }
+      ]
+    },
+    {
+      sectionText: 'Family Book',
+      name: 'Family Book (ສຳມະໂນຄົວ)',
+      fields: [
+        { id: 'famBook', label: 'Family Book ID (ເລກສຳມະໂນຄົວ)' },
+        { id: 'famIssue', label: 'Family Book Issue Date (ວັນອອກສຳມະໂນຄົວ)' }
+      ]
+    },
+    {
+      sectionText: 'Passport',
+      name: 'Passport (ໜັງສືຜ່ານແດນ)',
+      fields: [
+        { id: 'passport', label: 'Passport Number (ເລກພາດສະປອດ)' },
+        { id: 'passName', label: 'Name on Passport (ຊື່ໃນພາດສະປອດ)' },
+        { id: 'passIssue', label: 'Passport Issue Date (ວັນທີ່ອອກພາດສະປອດ)' },
+        { id: 'passExp', label: 'Passport Expiration Date (ວັນໝົດອາຍຸພາດສະປອດ)' }
+      ]
+    }
+  ];
+
+  function clearIdentityDocHighlights() {
+    IDENTITY_DOC_GROUPS.forEach(function(g) {
+      g.fields.forEach(function(f) {
+        document.getElementById(f.id).classList.remove('is-invalid');
+      });
+    });
+  }
+
+  function scrollToSectionLabel(sectionText, focusFieldId) {
+    var target = null;
+    var labels = document.querySelectorAll('label.text-danger.fw-bold');
+    for (var i = 0; i < labels.length; i++) {
+      if (labels[i].textContent.indexOf(sectionText) !== -1) { target = labels[i]; break; }
+    }
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    setTimeout(function() {
+      var el = document.getElementById(focusFieldId);
+      if (el) el.focus();
+    }, 300);
+  }
+
+  function validateIdentityDocument() {
+    clearIdentityDocHighlights();
+
+    var anyComplete = false;
+    var partialGroup = null;
+    var missingLabels = [];
+
+    for (var g = 0; g < IDENTITY_DOC_GROUPS.length; g++) {
+      var group = IDENTITY_DOC_GROUPS[g];
+      var values = group.fields.map(function(f) { return document.getElementById(f.id).value.trim(); });
+      var filledCount = values.filter(function(v) { return v !== ''; }).length;
+
+      if (filledCount === group.fields.length) {
+        anyComplete = true;
+      } else if (filledCount > 0) {
+        partialGroup = group;
+        missingLabels = [];
+        group.fields.forEach(function(f, idx) {
+          if (values[idx] === '') {
+            document.getElementById(f.id).classList.add('is-invalid');
+            missingLabels.push(f.label);
+          }
+        });
+        break; // ພົບກຸ່ມທີ່ບໍ່ຄົບ, ຫຍຸດກວດ ແລະ ລາຍງານກຸ່ມນີ້ກ່ອນ
+      }
+    }
+
+    if (partialGroup) {
+      alert("⚠️ ທ່ານປ້ອນຂໍ້ມູນ " + partialGroup.name + " ບໍ່ຄົບ! ກະລຸນາປ້ອນໃຫ້ຄົບທຸກຫົວຂໍ້ດັ່ງນີ້:\n- " + missingLabels.join("\n- "));
+      scrollToSectionLabel(partialGroup.sectionText, partialGroup.fields[0].id);
+      return false;
+    }
+
+    if (!anyComplete) {
+      alert("⚠️ ກະລຸນາປ້ອນຂໍ້ມູນຢັ້ງຢືນຕົວຕົນຢ່າງໜ້ອຍ 1 ຢ່າງໃຫ້ຄົບຖ້ວນ: ID Card, Family Book, ຫຼື Passport!");
+      scrollToSectionLabel('ID Card', 'idCard');
+      return false;
+    }
+
+    return true;
+  }
+
+  var PHONE_LENGTH_RULES = {
+    "+856": [8, 10], "+66": [9, 9], "+84": [9, 10], "+855": [8, 9], "+95": [7, 10],
+    "+86": [11, 11], "+82": [9, 10], "+81": [9, 10], "+65": [8, 8], "+60": [9, 10],
+    "+63": [10, 10], "+91": [10, 10], "+1": [10, 10], "+44": [10, 10], "+61": [9, 9]
+  };
+
+  // ກົດລະບຽບເບີໂທລາວ (ຫຼັງ +856): ມືຖື 20+8ໂຕ(10ໂຕລວມ), ຕັ້ງໂຕະ 30+7ໂຕ(9ໂຕລວມ), ຫ້ອງການ/ອື່ນໆ 8ໂຕລວມ
+  function validateLaoPhoneDigits(digits) {
+    if (/^20\d{8}$/.test(digits)) return { valid: true };
+    if (/^30\d{7}$/.test(digits)) return { valid: true };
+    if (/^\d{8}$/.test(digits)) return { valid: true };
+    return {
+      valid: false,
+      message: "⚠️ ຮູບແບບເບີໂທລາວບໍ່ຖືກຕ້ອງ! ຕ້ອງເປັນຮູບແບບໃດໜຶ່ງດັ່ງນີ້: " +
+        "ມືຖື (20 + 8 ໂຕເລກ ເຊັ່ນ 2029301330), " +
+        "ຕັ້ງໂຕະ (30 + 7 ໂຕເລກ ເຊັ່ນ 302930133), " +
+        "ຫຼື ຫ້ອງການ/ອື່ນໆ (8 ໂຕເລກ ເຊັ່ນ 21452511) — ປັດຈຸບັນມີ " + digits.length + " ໂຕ"
+    };
+  }
+
+  function onPhoneCountryCodeChange() {
+    var code = document.getElementById('phoneCountryCode').value;
+    var numInput = document.getElementById('phoneNumber');
+    if (code) {
+      numInput.disabled = false;
+      numInput.placeholder = "ປ້ອນເບີໂທ ບໍ່ໃສ່ 0 ໜ້າ ເຊັ່ນ: 2029301330";
+    } else {
+      numInput.disabled = true;
+      numInput.value = "";
+      numInput.placeholder = "ກະລຸນາເລືອກລະຫັດປະເທດກ່ອນ...";
+    }
+    checkPhoneNumberLive();
+  }
+
+  // ກວດ ແລະ ແກ້ໄຂເບີໂທແບບທັນທີ (ຂະນະພິມ): ລຶບໂຕໜັງສື/ຍະຫວ່າງ ແລະ ເຕືອນຄວາມຍາວ/ຮູບແບບທີ່ບໍ່ຖືກຕ້ອງ
+  function checkPhoneNumberLive() {
+    var code = document.getElementById('phoneCountryCode').value;
+    var input = document.getElementById('phoneNumber');
+    var errorBox = document.getElementById('phoneError');
+    var original = input.value;
+    var cleaned = original.replace(/\D/g, ''); // ລຶບທຸກຢ່າງທີ່ບໍ່ແມ່ນຕົວເລກ (ໂຕໜັງສື, ຍະຫວ່າງ, ສັນຍາລັກ)
+
+    if (cleaned !== original) {
+      input.value = cleaned;
+    }
+
+    if (!cleaned) {
+      errorBox.textContent = "";
+      return true;
+    }
+
+    if (code === "+856") {
+      var laoResult = validateLaoPhoneDigits(cleaned);
+      errorBox.textContent = laoResult.valid ? "" : laoResult.message;
+      return laoResult.valid;
+    }
+
+    var rule = PHONE_LENGTH_RULES[code] || [6, 12];
+    if (cleaned.length < rule[0] || cleaned.length > rule[1]) {
+      var expected = (rule[0] === rule[1]) ? (rule[0] + " ໂຕເລກ") : (rule[0] + "-" + rule[1] + " ໂຕເລກ");
+      errorBox.textContent = "⚠️ ເບີໂທບໍ່ຄົບ ຫຼື ຍາວເກີນໄປ — ສຳລັບລະຫັດ " + (code || "ນີ້") + " ຄວນມີ " + expected + " (ປັດຈຸບັນ " + cleaned.length + " ໂຕ)";
+      return false;
+    }
+
+    errorBox.textContent = "";
+    return true;
+  }
+
+  function scrollToPhoneField() {
+    var countryCodeEl = document.getElementById('phoneCountryCode');
+    var numberEl = document.getElementById('phoneNumber');
+    countryCodeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // ໃຫ້ browser ແປງເລື່ອນສຳເລັດກ່ອນຄ່ອຍ focus
+    setTimeout(function() {
+      if (!numberEl.disabled) {
+        numberEl.focus();
+      } else {
+        countryCodeEl.focus();
+      }
+    }, 300);
+  }
+
+  function combineAndValidatePhone() {
+    var code = document.getElementById('phoneCountryCode').value;
+    var numRaw = document.getElementById('phoneNumber').value.trim();
+    var digitsOnly = numRaw.replace(/\D/g, '');
+
+    if (!numRaw && !code) {
+      document.getElementById('phone').value = "";
+      document.getElementById('phoneError').textContent = "";
+      return true; // phone is optional
+    }
+    if (numRaw && !code) {
+      alert("⚠️ ກະລຸນາເລືອກລະຫັດປະເທດກ່ອນປ້ອນເບີໂທ! (Please select a country code first.)");
+      scrollToPhoneField();
+      return false;
+    }
+    if (code && !numRaw) {
+      alert("⚠️ ກະລຸນາປ້ອນເບີໂທ! (Please enter a phone number.)");
+      scrollToPhoneField();
+      return false;
+    }
+    if (!checkPhoneNumberLive()) {
+      alert("⚠️ ເບີໂທບໍ່ຖືກຕ້ອງ! ກະລຸນາກວດເບີໂທຄືນ (ຕ້ອງເປັນຕົວເລກ, ບໍ່ໃສ່ 0 ໜ້າ, ຄວາມຍາວຕ້ອງຖືກຕ້ອງຕາມລະຫັດປະເທດ). (Phone number is invalid, please check again.)");
+      scrollToPhoneField();
+      return false;
+    }
+    document.getElementById('phone').value = code + digitsOnly;
+    return true;
+  }
+
+  function handleFormSubmit(form) {
+    if (!validateIssueDates()) return;
+    if (!validateIdentityDocument()) return;
+    if (!combineAndValidatePhone()) return;
+
+    var saveBtn = document.getElementById('saveBtn');
+    var statusBox = document.getElementById('status');
+
+    // 🔒 ປິດປຸ່ມ ແລະ ສະແດງ spinner ເພື່ອບໍ່ໃຫ້ user ກົດຊ້ຳຫຼາຍຄັ້ງ
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>ກຳລັງບັນທຶກ... (Saving...)';
+
+    statusBox.innerHTML =
+      '<div class="alert alert-info d-flex align-items-center justify-content-center gap-2 mb-0">' +
+      '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>' +
+      '<span>⏳ ກຳລັງບັນທຶກ ແລະ ອັບໂຫຼດໄຟລ໌ລົງ Google Drive... (Saving & Uploading...)</span>' +
+      '</div>';
+    statusBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    function restoreSaveBtn() {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '💾 Save All Data (ບັນທຶກຂໍ້ມູນທັງໝົດ)';
+    }
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        restoreSaveBtn();
+        var isWarning = res && res.toString().indexOf('⚠️') === 0;
+
+        if (isWarning) {
+          statusBox.innerHTML = '<div class="alert alert-danger mb-0">' + res + '</div>';
+          statusBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return; // ຂໍ້ມູນຍັງບໍ່ຖືກບັນທຶກ, ບໍ່ລ້າງຟອມ ໃຫ້ user ແກ້ໄຂ
+        }
+
+        // ✅ ບັນທຶກສຳເລັດ - ສະແດງໝາຍຕິກສີຂຽວ ແລ້ວຄ່ອຍລ້າງຟອມ
+        statusBox.innerHTML =
+          '<div class="alert alert-success d-flex align-items-center justify-content-center gap-2 mb-0">' +
+          '<span style="font-size: 1.4em;">✅</span>' +
+          '<span>' + res + '</span>' +
+          '</div>';
+        statusBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        setTimeout(function() {
+          resetForm();
+          window.scrollTo(0, 0);
+        }, 2000);
+      })
+      .withFailureHandler(function(err) {
+        restoreSaveBtn();
+        statusBox.innerHTML = '<div class="alert alert-danger mb-0">❌ ເກີດຂໍ້ຜິດພາດ: ' + (err && err.message ? err.message : err) + '</div>';
+        statusBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      })
+      .processForm(form);
+  }
+
+  function searchStaff() {
+    var id = document.getElementById('staffId').value.trim();
+    if(id === "") { alert("ກະລຸນາປ້ອນລະຫັດພະນັກງານກ່ອນ! (Please enter Staff ID!)"); return; }
+    document.getElementById('status').innerHTML = "⏳ ກຳລັງຄົ້ນຫາ... (Searching...)";
+    clearIdentityDocHighlights();
+    
+    google.script.run
+      .withSuccessHandler(function(data) {
+        if(data) {
+          window.isSearchingAddress = true; 
+
+          $('#statusSelect').val(data.status || "Active").trigger('change');
+          document.getElementById('resignDate').value = data.resignDate || "";
+          document.getElementById('resignReason').value = data.resignReason || "";
+          
+          if(data.resignLetterUrl && data.resignLetterUrl.trim() !== "") {
+            document.getElementById('resignLetterLink').href = data.resignLetterUrl;
+            document.getElementById('resignLetterLink').style.display = "inline-block";
+            document.getElementById('oldResignLetterUrl').value = data.resignLetterUrl;
+          } else {
+            document.getElementById('resignLetterLink').style.display = "none";
+            document.getElementById('oldResignLetterUrl').value = "";
+          }
+
+          if(data.photoUrl && data.photoUrl.trim() !== "") {
+             imgPreview.src = data.photoUrl;
+             document.getElementById('oldPhotoUrl').value = data.photoUrl;
+          } else {
+             imgPreview.src = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+             document.getElementById('oldPhotoUrl').value = "";
+          }
+          photoBase64.value = "";
+
+          if(data.cvUrl && data.cvUrl.trim() !== "") {
+            document.getElementById('cvLink').href = data.cvUrl;
+            document.getElementById('cvLink').style.display = "inline-block";
+            document.getElementById('oldCvUrl').value = data.cvUrl;
+          } else {
+            document.getElementById('cvLink').style.display = "none";
+            document.getElementById('oldCvUrl').value = "";
+          }
+
+          if(data.contractUrl && data.contractUrl.trim() !== "") {
+            document.getElementById('contractLink').href = data.contractUrl;
+            document.getElementById('contractLink').style.display = "inline-block";
+            document.getElementById('oldContractUrl').value = data.contractUrl;
+          } else {
+            document.getElementById('contractLink').style.display = "none";
+            document.getElementById('oldContractUrl').value = "";
+          }
+
+          if(data.bankBookUrl && data.bankBookUrl.trim() !== "") {
+            document.getElementById('bankBookLink').href = data.bankBookUrl;
+            document.getElementById('bankBookLink').style.display = "inline-block";
+            document.getElementById('oldBankBookUrl').value = data.bankBookUrl;
+          } else {
+            document.getElementById('bankBookLink').style.display = "none";
+            document.getElementById('oldBankBookUrl').value = "";
+          }
+
+          document.getElementById('nickname').value = data.nickname || "";
+          document.getElementById('firstNameLao').value = data.firstNameLao || "";
+          document.getElementById('lastNameLao').value = data.lastNameLao || "";
+          document.getElementById('firstNameEn').value = data.firstNameEn || "";
+          document.getElementById('lastNameEn').value = data.lastNameEn || "";
+          document.getElementById('phone').value = data.phone || "";
+          (function() {
+            var codes = Array.from(document.querySelectorAll('#phoneCountryCode option'))
+              .map(function(o) { return o.value; })
+              .filter(function(v, idx, arr) { return v && arr.indexOf(v) === idx; })
+              .sort(function(a, b) { return b.length - a.length; });
+            var stored = (data.phone || "").trim();
+            var matchedCode = "";
+            var rest = stored;
+            for (var c = 0; c < codes.length; c++) {
+              if (stored.indexOf(codes[c]) === 0) {
+                matchedCode = codes[c];
+                rest = stored.slice(codes[c].length);
+                break;
+              }
+            }
+            $('#phoneCountryCode').val(matchedCode).trigger('change');
+            document.getElementById('phoneNumber').disabled = false;
+            document.getElementById('phoneNumber').placeholder = "ປ້ອນເບີໂທ ບໍ່ໃສ່ 0 ໜ້າ ເຊັ່ນ: 2029301330";
+            document.getElementById('phoneNumber').value = rest;
+            checkPhoneNumberLive();
+          })();
+          
+          // 📌 ອັບເດດຂໍ້ມູນ Branch, Dept, Position
+          document.getElementById('branch').value = data.branch || "";
+          document.getElementById('department').value = data.department || "";
+          document.getElementById('position').value = data.position || "";
+          
+          document.getElementById('hireDate').value = data.hireDate || "";
+          document.getElementById('salary').value = data.salary || "";
+          document.getElementById('dob').value = data.dob || "";
+          
+          var currentUnit = data.unit || "";
+          if (currentUnit !== "" && !$('#unit').find("option[value='" + currentUnit + "']").length) {
+            $('#unit').append(new Option(currentUnit, currentUnit, true, true));
+          }
+          $('#unit').val(currentUnit).trigger('change');
+
+          document.getElementById('gender').value = data.gender || "";
+          $('#gender').trigger('change.select2');
+          
+          document.getElementById('nationality').value = data.nationality || "Lao (ລາວ)";
+          $('#nationality').trigger('change.select2');
+          
+          document.getElementById('maritalStatus').value = data.maritalStatus || "";
+          $('#maritalStatus').trigger('change.select2');
+          
+          document.getElementById('source').value = data.source || "";
+          $('#source').trigger('change.select2');
+          
+          $('#referrer').val(data.referrer || "").trigger('change');
+
+          populateAddressSequence('Birth', data.pBirth, data.dBirth, data.vBirth);
+          populateAddressSequence('Curr', data.pCurr, data.dCurr, data.vCurr);
+
+          document.getElementById('eduLevel').value = data.eduLevel || "";
+          $('#eduLevel').trigger('change.select2');
+          
+          document.getElementById('school').value = data.school || "";
+          document.getElementById('major').value = data.major || "";
+          document.getElementById('gpa').value = data.gpa || "";
+          
+          document.getElementById('driverId').value = data.driverId || "";
+          document.getElementById('idCard').value = data.idCard || "";
+          document.getElementById('idName').value = data.idName || "";
+          document.getElementById('idIssue').value = data.idIssue || "";
+          document.getElementById('idExp').value = data.idExp || "";
+          document.getElementById('famBook').value = data.famBook || "";
+          document.getElementById('famIssue').value = data.famIssue || "";
+          document.getElementById('passport').value = data.passport || "";
+          document.getElementById('passName').value = data.passName || "";
+          document.getElementById('passIssue').value = data.passIssue || "";
+          document.getElementById('passExp').value = data.passExp || "";
+
+          document.getElementById('bankAccountName').value = data.bankAccountName || "";
+          document.getElementById('bankAccountNumber').value = data.bankAccountNumber || "";
+          document.getElementById('currency').value = data.currency || "";
+
+          document.getElementById('status').innerHTML = "🟢 ພົບຂໍ້ມູນແລ້ວ! ທ່ານສາມາດແກ້ໄຂແລ້ວກົດບັນທຶກ. (Data found! You can edit and save.)";
+          
+          setTimeout(function() { window.isSearchingAddress = false; }, 1000); 
+        } else {
+          document.getElementById('status').innerHTML = "❌ ບໍ່ພົບຂໍ້ມູນພະນັກງານລະຫັດ: " + id;
+          resetForm();
+          window.isSearchingAddress = false;
+        }
+      }).getStaffById(id);
+  }
+
+  function loadAllStaff() {
+    document.getElementById('tableOutput').innerHTML = "⏳ ກຳລັງໂຫຼດຂໍ້ມູນ... (Loading Data...)";
+    google.script.run.withSuccessHandler(function(data) {
+      var table = '<table class="table table-striped table-hover table-bordered mt-2" style="font-size:12px; white-space: nowrap;"><thead><tr class="table-dark">';
+      for (var h=0; h<data[0].length; h++) table += '<th>' + data[0][h] + '</th>';
+      table += '</tr></thead><tbody>';
+      for (var i=1; i<data.length; i++) {
+        table += '<tr>';
+        for (var j=0; j<data[i].length; j++) {
+           if((j == 38 || j == 39 || j == 40 || j == 48 || j == 52) && data[i][j]) {
+             var labelText = (j == 38) ? "ເບິ່ງຮູບ" : (j == 39) ? "ເບິ່ງ CV" : (j == 40) ? "ເບິ່ງສັນຍາ" : (j == 48) ? "ເບິ່ງໃບລາອອກ" : "ເບິ່ງປຶ້ມບັນຊີ";
+             table += '<td><a href="' + data[i][j] + '" target="_blank">' + labelText + '</a></td>';
+           } else {
+             table += '<td>' + data[i][j] + '</td>';
+           }
+        }
+        table += '</tr>';
+      }
+      table += '</tbody></table>';
+      document.getElementById('tableOutput').innerHTML = table;
+    }).getAllStaff();
+  }
+
+  function resetForm() {
+    document.getElementById('hrForm').reset();
+    document.getElementById('status').innerHTML = "";
+    clearIdentityDocHighlights();
+    imgPreview.src = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+    photoBase64.value = "";
+    document.getElementById('oldPhotoUrl').value = "";
+    document.getElementById('cvBase64').value = "";
+    document.getElementById('cvFileName').value = "";
+    document.getElementById('oldCvUrl').value = "";
+    document.getElementById('contractBase64').value = "";
+    document.getElementById('contractFileName').value = "";
+    document.getElementById('oldContractUrl').value = "";
+    
+    document.getElementById('resignLetterBase64').value = "";
+    document.getElementById('resignLetterFileName').value = "";
+    document.getElementById('oldResignLetterUrl').value = "";
+    document.getElementById('resignLetterLink').style.display = "none";
+    $('#statusSelect').val('Active').trigger('change');
+
+    document.getElementById('bankBookBase64').value = "";
+    document.getElementById('bankBookFileName').value = "";
+    document.getElementById('oldBankBookUrl').value = "";
+    document.getElementById('bankBookLink').style.display = "none";
+    
+    document.getElementById('cvLink').style.display = "none";
+    document.getElementById('contractLink').style.display = "none";
+
+    $('#phoneCountryCode').val('').trigger('change.select2');
+    document.getElementById('phoneNumber').value = "";
+    document.getElementById('phoneNumber').disabled = true;
+    document.getElementById('phoneNumber').placeholder = "ກະລຸນາເລືອກລະຫັດປະເທດກ່ອນ...";
+    document.getElementById('phone').value = "";
+    document.getElementById('phoneError').textContent = "";
+    
+    $('.search-select').val('').trigger('change.select2');
+    $('#unit').val('').trigger('change.select2');
+    
+    $('#dBirth').empty().append('<option value="">-- ເລືອກເມືອງ --</option>').prop('disabled', true).trigger('change.select2');
+    $('#vBirth').empty().append('<option value="">-- ເລືອກບ້ານ --</option>').prop('disabled', true).trigger('change.select2');
+    $('#dCurr').empty().append('<option value="">-- ເລືອກເມືອງ --</option>').prop('disabled', true).trigger('change.select2');
+    $('#vCurr').empty().append('<option value="">-- ເລືອກບ້ານ --</option>').prop('disabled', true).trigger('change.select2');
+  }
+</script>
+</body>
+</html>
